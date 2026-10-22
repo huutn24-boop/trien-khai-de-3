@@ -102,7 +102,7 @@ rate(container_network_transmit_bytes_total{name!=""}[5m])
 
 Prometheus scrape cAdvisor tại `cadvisor:8080`. Trên Docker Desktop, cAdvisor quan sát Linux VM của Docker Desktop, không phải toàn bộ host Windows/macOS.
 
-Promtail lấy tên container và đường dẫn log qua Docker discovery. Docker socket được đặt sau `docker-socket-proxy`; proxy chỉ bật các endpoint đọc cần thiết (`POST=0`) và chỉ tham gia monitoring network. Tuy vậy, quyền truy cập Docker API vẫn nhạy cảm; không publish cổng proxy ra host hoặc Internet. Việc đọc `/var/lib/docker/containers` phụ thuộc Docker Engine và có thể cần điều chỉnh trên các bản Docker Desktop khác nhau.
+Promtail lấy metadata container qua Docker discovery nhưng chỉ ingest log của các container có tên bắt đầu bằng `wp_`, không thu gom log từ các container khác trên cùng Docker host. Docker socket được đặt sau `docker-socket-proxy`; proxy chỉ bật các endpoint đọc cần thiết (`POST=0`) và chỉ tham gia monitoring network. Tuy vậy, quyền truy cập Docker API vẫn nhạy cảm; không publish cổng proxy ra host hoặc Internet. Việc đọc `/var/lib/docker/containers` phụ thuộc Docker Engine và có thể cần điều chỉnh trên các bản Docker Desktop khác nhau.
 
 ## Hardening và giới hạn
 

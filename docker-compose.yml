@@ -181,6 +181,9 @@ services:
       - loki_data:/tmp/loki
     networks:
       - monitoring-net
+    depends_on:
+      loki-init:
+        condition: service_completed_successfully
     security_opt:
       - no-new-privileges:true
     deploy:
@@ -188,6 +191,19 @@ services:
         limits:
           cpus: "0.5"
           memory: 512M
+
+  loki-init:
+    image: alpine:3.20
+    container_name: wp_loki_init
+    user: "0:0"
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - chown -R 10001:10001 /loki && chmod 0750 /loki
+    volumes:
+      - loki_data:/loki
+    network_mode: none
 
   docker-socket-proxy:
     image: tecnativa/docker-socket-proxy:0.3.0
@@ -197,6 +213,7 @@ services:
       CONTAINERS: "1"
       EVENTS: "1"
       INFO: "1"
+      NETWORKS: "1"
       PING: "1"
       VERSION: "1"
       POST: "0"
