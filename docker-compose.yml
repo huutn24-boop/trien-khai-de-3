@@ -160,6 +160,7 @@ services:
       - monitoring-net
     depends_on:
       - prometheus
+      - loki
     security_opt:
       - no-new-privileges:true
     deploy:
@@ -167,6 +168,72 @@ services:
         limits:
           cpus: "0.5"
           memory: 512M
+
+  loki:
+    image: grafana/loki:2.8.2
+    container_name: wp_loki
+    restart: unless-stopped
+    user: "10001:10001"
+    command:
+      - -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/tmp/loki
+    networks:
+      - monitoring-net
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:0.3.0
+    container_name: wp_docker_socket_proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: "1"
+      EVENTS: "1"
+      INFO: "1"
+      PING: "1"
+      VERSION: "1"
+      POST: "0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - monitoring-net
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+
+  promtail:
+    image: grafana/promtail:2.8.2
+    container_name: wp_promtail
+    restart: unless-stopped
+    user: "0:0"
+    command:
+      - -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    networks:
+      - monitoring-net
+    depends_on:
+      - loki
+      - docker-socket-proxy
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
 
 networks:
   frontend-net:
@@ -183,3 +250,4 @@ volumes:
   wordpress_data:
   prometheus_data:
   grafana_data:
+  loki_data:
